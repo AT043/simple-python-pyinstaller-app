@@ -1,7 +1,7 @@
 node {
     stage('Build') {
         checkout scm
-        docker.image('python:3.12.1-alpine3.19').inside {
+        docker.image('python:2-alpine').inside {
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
             stash(name: 'compiled-results', includes: 'sources/*.py*')
         }
