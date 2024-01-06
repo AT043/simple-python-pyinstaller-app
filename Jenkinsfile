@@ -1,21 +1,30 @@
 node {
     stage('Build') {
-        docker.image('python:3.12.1-alpine3.19').inside {
+        docker.image('python:2-alpine').inside {
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
-            stash(name: 'compiled-results', includes: 'sources/*.py*')
         }
     }
 
     stage('Test') {
-        try {
-            docker.image('qnib/pytest').inside {
-                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+        docker.image('qnib/pytest').inside {
+            sh 'py.test --verbose --junit-xml test-reports/results.xml sources/test_calc.py'
+        }
+        post {
+            always {
+                junit 'test-reports/results.xml'
             }
-        } catch (Exception e) {
-            currentBuild.result = 'FAILURE'
-            throw e
-        } finally {
-            junit 'test-reports/results.xml'
+        }
+    }
+
+    stage('Deploy') {
+        docker.image('cdrx/pyinstaller-linux:python2').inside {
+            sh 'echo "Proses Deploy"'
+            sh 'pyinstaller --onefile sources/add2vals.py'
+        }
+        post {
+            success {
+                archiveArtifacts 'dist/add2vals'
+            }
         }
     }
 }
