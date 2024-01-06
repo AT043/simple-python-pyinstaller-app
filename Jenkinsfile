@@ -10,11 +10,6 @@ node {
             docker.image('qnib/pytest').inside {
                 sh 'py.test --verbose --junit-xml test-reports/results.xml sources/test_calc.py'
             }
-            post {
-                always {
-                    junit 'test-reports/results.xml'
-                }
-            }
         }
 
         stage('Deploy') {
@@ -22,15 +17,18 @@ node {
                 sh 'echo "Proses Deploy"'
                 sh 'pyinstaller --onefile sources/add2vals.py'
             }
-            post {
-                success {
-                    archiveArtifacts 'dist/add2vals'
-                }
-            }
+        }
+
+        // Post-build actions
+        junit 'test-reports/results.xml'
+
+        // Archive artifacts on success
+        success {
+            archiveArtifacts 'dist/add2vals'
         }
     } catch (Exception e) {
+        // Handle pipeline failure
         echo "Pipeline failed: ${e.message}"
         currentBuild.result = 'FAILURE'
-        error(e.message)
     }
 }
