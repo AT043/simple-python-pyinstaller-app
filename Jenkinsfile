@@ -16,11 +16,13 @@ node {
 		
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside {
-				sh 'sudo pip install pyinstaller --user'
-				sh 'sudo pyinstaller --onefile sources/add2vals.py --user'
+				sh 'adduser -D -u 1010 myuser'  // Create a non-root user with UID 1000
+				sh 'su myuser -c "pip install pyinstaller --user"'
+				sh 'su myuser -c "pyinstaller --onefile sources/add2vals.py"'
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
+
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
         currentBuild.result = 'FAILURE'
