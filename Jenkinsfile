@@ -16,11 +16,11 @@ node {
 		
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside('-u 1000') {
-				// Set XDG_CACHE_HOME to a writable directory
-				sh 'export XDG_CACHE_HOME="/tmp/xdg_cache_home"'
+				// Set PIP_CACHE_DIR to a writable directory
+				sh 'export PIP_CACHE_DIR="/tmp/pip_cache_dir"'
 				
-				// Install pyinstaller using pip with -H flag
-				sh 'pip install -H "/tmp/xdg_cache_home" pyinstaller'
+				// Install pyinstaller using pip with the specified cache directory
+				sh 'pip install --cache-dir="/tmp/pip_cache_dir" pyinstaller'
 				
 				// Run pyinstaller
 				sh 'pyinstaller --onefile sources/add2vals.py'
@@ -29,6 +29,7 @@ node {
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
+
 
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
