@@ -16,20 +16,11 @@ node {
 		
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside {
-				// Set PIP_CACHE_DIR to a writable directory
-				sh 'export PIP_CACHE_DIR="/tmp/pip_cache_dir"'
-
-				// Install pyinstaller using pip with the specified cache directory
-				sh 'pip install --user --cache-dir="/tmp/pip_cache_dir" pyinstaller'
-
-				// Run pyinstaller
-				sh 'pyinstaller --onefile sources/add2vals.py'
-
-				// Archive artifacts
+				sh 'sudo pip install pyinstaller --user'
+				sh 'sudo pyinstaller --onefile sources/add2vals.py --user'
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
-
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
         currentBuild.result = 'FAILURE'
