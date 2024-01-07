@@ -19,7 +19,8 @@ node {
 				sh 'pip install pyinstaller'
 				sh 'pyinstaller --onefile sources/add2vals.py'
 				archiveArtifacts 'dist/add2vals'
-        }
+			}
+		}
         
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
