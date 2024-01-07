@@ -16,12 +16,16 @@ node {
 		
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside {
-				sh 'adduser -D -u 1010 myuser'  // Create a non-root user with UID 1000
-				sh 'su myuser -c "pip install pyinstaller --user"'
-				sh 'su myuser -c "pyinstaller --onefile sources/add2vals.py"'
+				// Check the existing non-root user (it may vary based on the Docker image)
+				sh 'whoami'
+
+				// Use the existing non-root user to install and run pyinstaller
+				sh 'pip install pyinstaller --user'
+				sh 'pyinstaller --onefile sources/add2vals.py'
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
+
 
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
