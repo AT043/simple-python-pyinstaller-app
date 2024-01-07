@@ -16,8 +16,8 @@ node {
 		
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside('-u 1000') {
-				sh 'sudo pip install pyinstaller'
-				sh 'sudo pyinstaller --onefile sources/add2vals.py'
+				sh 'pip install pyinstaller'
+				sh 'pyinstaller --onefile sources/add2vals.py'
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
