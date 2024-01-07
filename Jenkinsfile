@@ -1,45 +1,27 @@
-pipeline {
-    agent none
-    stages {
+node {
+    try {
         stage('Build') {
-            agent {
-                docker {
-                    image 'python:2-alpine'
-                }
-            }
-            steps {
+            docker.image('python:3.12.1-alpine3.19').inside {
                 sh 'python -m py_compile sources/add2vals.py sources/calc.py'
+                stash(name: 'compiled-results', includes: 'sources/*.py*')
             }
         }
+
         stage('Test') {
-            agent {
-                docker {
-                    image 'qnib/pytest'
-                }
+            docker.image('qnib/pytest').inside {
+                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
             }
-            steps {
-                sh 'py.test --verbose --junit-xml test-reports/results.xml sources/test_calc.py'
-            }
-            post {
-                always {
-                    junit 'test-reports/results.xml'
-                }
-            }
+            junit 'test-reports/results.xml'
         }
+
         stage('Deploy') {
-            agent {
-                docker {
-                    image 'cdrx/pyinstaller-linux:python2'
-                }
-            }
-            steps {
+            docker.image('python:2.7.18-alpine3.12').inside {
                 sh 'pyinstaller --onefile sources/add2vals.py'
             }
-            post {
-                success {
-                    archiveArtifacts 'dist/add2vals'
-                }
-            }
+            archiveArtifacts 'dist/add2vals'
         }
+    } catch (Exception e) {
+        echo "Pipeline failed: ${e.message}"
+        currentBuild.result = 'FAILURE'
     }
 }
