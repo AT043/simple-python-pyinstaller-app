@@ -15,13 +15,12 @@ node {
         }
 		
 		stage('Deploy') {
-			docker.image('python:3.12.1-alpine3.19').inside('-u 0') {
-				sh 'pip install pyinstaller'
-				sh 'pyinstaller --onefile sources/add2vals.py'
+			docker.image('python:3.12.1-alpine3.19').inside('-u 1000') {
+				sh 'sudo pip install pyinstaller'
+				sh 'sudo pyinstaller --onefile sources/add2vals.py'
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
-        
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
         currentBuild.result = 'FAILURE'
