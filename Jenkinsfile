@@ -14,13 +14,16 @@ node {
             junit 'test-reports/results.xml'
         }
 
-        stage('Deploy') {
-            docker.image('python:3.12.1-alpine3.19').inside {
-                sh 'pip install pyinstaller --user'
-                sh 'pyinstaller --onefile sources/add2vals.py'
-                archiveArtifacts 'dist/add2vals'
-            }
-        }
+		stage('Deploy') {
+			docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
+				// Install pyinstaller without --user flag
+				sh 'pip install pyinstaller'
+
+				// Run pyinstaller
+				sh 'pyinstaller --onefile sources/add2vals.py'
+				archiveArtifacts 'dist/add2vals'
+			}
+		}
 
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
