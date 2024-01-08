@@ -1,22 +1,11 @@
 node {
+	agent {
+		docker {
+			image "python:3.12.1"
+			args '--user 0:0'
+		}
+	}
     try {
-    
-		environment {
-			JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
-			JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
-			JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
-		}
-		agent {
-			dockerfile {
-				filename 'Dockerfile.build'
-				additionalBuildArgs '''\
-				--build-arg GID=$JENKINS_GROUP_ID \
-				--build-arg UID=$JENKINS_USER_ID \
-				--build-arg UNAME=$JENKINS_USER_NAME \
-				'''
-			}
-		}
-
         // Build stage
         stage('Build') {
             docker.image('python:3.12.1-alpine3.19').inside {
@@ -36,8 +25,7 @@ node {
         // Deploy stage
         stage('Deploy') {
             docker.image('python:3.12.1-alpine3.19').inside {
-                // Use the existing non-root user to install and run pyinstaller
-                sh 'pip install --user pyinstaller'
+                sh 'pip install pyinstaller --user'
                 sh 'pyinstaller --onefile sources/add2vals.py'
                 archiveArtifacts 'dist/add2vals'
             }
@@ -46,5 +34,15 @@ node {
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
         currentBuild.result = 'FAILURE'
+    }
+    
+    steps {
+		sh 'git clean -fdx'
+    }
+    
+    post {
+		cleanup {
+			cleanWs()
+		}
     }
 }
