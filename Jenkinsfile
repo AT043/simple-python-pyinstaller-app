@@ -16,6 +16,9 @@ node {
 
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
+				// Install binutils (objdump)
+				sh 'apk add --no-cache binutils'
+
 				// Install pyinstaller without --user flag
 				sh 'pip install pyinstaller'
 
