@@ -13,14 +13,12 @@ node {
             }
             junit 'test-reports/results.xml'
         }
-
+        
 		stage('Deploy') {
 			docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
-				// Download and install binutils
-				// sh 'apk add --no-cache curl'
-				// sh 'curl -O https://dl-cdn.alpinelinux.org/alpine/v3.12/main/x86_64/binutils-2.34-r1.apk'
-				// sh 'apk add --no-cache --allow-untrusted binutils-2.34-r1.apk'
-
+				// Uncomment and adjust the following lines based on your Linux distribution's package manager
+				sh 'apk add --no-cache binutils'
+				
 				// Install pyinstaller without --user flag
 				sh 'pip install pyinstaller'
 
@@ -29,6 +27,7 @@ node {
 				archiveArtifacts 'dist/add2vals'
 			}
 		}
+
 
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
