@@ -13,24 +13,24 @@ node {
             }
             junit 'test-reports/results.xml'
         }
-        
-		stage('Deploy') {
-			docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
-				// Uncomment and adjust the following lines based on your Linux distribution's package manager
-				sh 'apk add --no-cache binutils'
-				
-				// Install pyinstaller without --user flag
-				sh 'pip install pyinstaller'
 
-				// Run pyinstaller
-				sh 'pyinstaller --onefile sources/add2vals.py'
-				archiveArtifacts 'dist/add2vals'
+        stage('Manual Approval') {
+            input message: 'Lanjutkan ke tahap Deploy?', submitter: 'user'
+        }
 
-				// Pause for 1 minute after successful deployment
-				echo 'Pausing for 1 minute...'
-				sleep 60
-			}
-		}
+        stage('Deploy') {
+            docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
+                // Uncomment and adjust the following lines based on your Linux distribution's package manager
+                sh 'apk add --no-cache binutils'
+
+                // Install pyinstaller without --user flag
+                sh 'pip install pyinstaller'
+
+                // Run pyinstaller
+                sh 'pyinstaller --onefile sources/add2vals.py'
+                archiveArtifacts 'dist/add2vals'
+            }
+        }
 
     } catch (Exception e) {
         echo "Pipeline failed: ${e.message}"
