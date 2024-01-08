@@ -29,6 +29,10 @@ node {
                 // Run pyinstaller
                 sh 'pyinstaller --onefile sources/add2vals.py'
                 archiveArtifacts 'dist/add2vals'
+                
+                // Pause for 1 minute after successful deployment
+				echo 'Pausing for 1 minute...'
+				sleep 60
             }
         }
 
