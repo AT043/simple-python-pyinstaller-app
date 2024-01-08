@@ -1,7 +1,7 @@
 node {
     try {
         // Declare the Docker image for the entire pipeline
-        docker.image("python:3.12.1").inside("--user 0:0") {
+        docker.image("python:3.9.2").inside("--user 0:0") {
 
             // Build stage
             stage('Build') {
