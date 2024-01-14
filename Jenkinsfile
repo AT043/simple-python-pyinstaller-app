@@ -1,9 +1,7 @@
 node {
     // Stage for building
     stage('Build') {
-        // Run in a Docker container with Python 2
         docker.image('python:2-alpine').inside {
-            // Compile Python files and stash the results
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
             stash(name: 'compiled-results', includes: 'sources/*.py*')
         }
@@ -11,64 +9,57 @@ node {
 
     // Stage for testing
     stage('Test') {
-        // Run in a Docker container with qnib/pytest
         docker.image('qnib/pytest').inside {
-            // Run pytest and store results in JUnit format
             sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
         }
 
-        // Post-action for test stage
         post {
             always {
-                // Archive JUnit test results
                 junit 'test-reports/results.xml'
             }
         }
     }
-    
-    //stage for Manual Approval
+
+    // Stage for Manual Approval
     stage('Manual Approval') {
-        input message: 'Lanjutkan ke tahap Deploy?', ok: 'Proceed' 
+        environment {
+            DEPLOY_APPROVAL = 'false'
+        }
+        input message: 'Lanjutkan ke tahap Deploy?', ok: 'Proceed', submitter: 'admin'
+        script {
+            DEPLOY_APPROVAL = 'true'
+        }
     }
 
     // Stage for deployment
     stage('Deploy') {
-        // Run on any available agent
+        when {
+            expression { return env.DEPLOY_APPROVAL == 'true' }
+        }
+
         agent any
 
-        // Define environment variables
         environment {
             VOLUME = '$(pwd)/sources:/src'
             IMAGE = 'cdrx/pyinstaller-linux:python2'
         }
 
         steps {
-            // Inside the build directory
             dir(path: env.BUILD_ID) {
-                // Unstash compiled results
                 unstash(name: 'compiled-results')
-
-                // Run pyinstaller in a Docker container
                 sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-				
-				// Echo and sleep after pyinstaller command
-				echo 'Jeda 1 menit saja...'
-				sleep time: 60, unit: 'SECONDS'
-            
+                echo 'Jeda 1 menit saja...'
+                sleep time: 60, unit: 'SECONDS'
             }
         }
 
-        // Post-action for deploy stage
         post {
             success {
-                // Archive the deployed artifact
                 archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
-
-                // Clean up build and dist directories
                 sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
             }
         }
         echo 'Jeda 1 menit saja...'
-		sleep time: 60, unit: 'SECONDS'  
+        sleep time: 60, unit: 'SECONDS'
     }
 }
