@@ -17,16 +17,11 @@ node {
         input message: 'Lanjutkan ke tahap Deploy?', ok: 'Proceed' 
     }
 
-    stage('Deploy') {
-    
-		script {
-			sh 'sudo groupadd docker || true'
-			// Ensure the Jenkins user is added to the docker group
-			sh 'usermod -aG docker jenkins'
-		}
-		
+    stage('Deploy') {    		
 		docker.image('python:3.12.1-alpine3.19').inside{
-
+			
+			sh 'chmod -R 777 /dist'
+			
 			sh 'pip install pyinstaller'
 
 			sh 'pyinstaller --onefile sources/add2vals.py'
@@ -36,5 +31,4 @@ node {
 			sleep time: 60, unit: 'SECONDS'
         }
    }
-
 }
