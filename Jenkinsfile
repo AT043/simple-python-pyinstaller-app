@@ -15,20 +15,19 @@ node {
         }
 
         stage('Manual Approval') {
-            input message: 'Lanjutkan ke tahap Deploy?', submitter: 'user'
+            input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan' 
         }
 
         stage('Deploy') {
-            docker.image('python:3.12.1-alpine3.19').inside('-u 0:0') {
-                sh 'apk add --no-cache binutils'
+            docker.image('python:3.12.1-alpine3.19').inside{
 
                 sh 'pip install pyinstaller'
 
                 sh 'pyinstaller --onefile sources/add2vals.py'
-                archiveArtifacts 'dist/add2vals'
+                archiveArtifacts 'dist/add2vals', allowEmptyArchive: true
                 
-				echo 'Pausing for 1 minute...'
-				sleep 60
+				echo 'Jeda 1 menit saja...'
+				sleep time: 60, unit: 'SECONDS'
             }
         }
 
