@@ -22,12 +22,24 @@ node {
 
     // Stage for Manual Approval
     stage('Manual Approval') {
-        environment {
-            DEPLOY_APPROVAL = 'false'
+        agent any
+
+        options {
+            timeout(time: 1, unit: 'HOURS') // Set an appropriate timeout
         }
-        input message: 'Lanjutkan ke tahap Deploy?', ok: 'Proceed', submitter: 'admin'
-        script {
-            DEPLOY_APPROVAL = 'true'
+
+        steps {
+            script {
+                def userInput = input(
+                    message: 'Lanjutkan ke tahap Deploy?',
+                    ok: 'Proceed',
+                    parameters: [booleanParam(defaultValue: true, description: 'Proceed to Deploy?', name: 'DEPLOY_APPROVAL')]
+                )
+                
+                if (!userInput.DEPLOY_APPROVAL) {
+                    error('Pipeline aborted by user')
+                }
+            }
         }
     }
 
