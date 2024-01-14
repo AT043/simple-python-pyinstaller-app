@@ -20,39 +20,14 @@ node {
         }
     }
 
-    // Stage for Manual Approval
     stage('Manual Approval') {
-        agent any
-
-        options {
-            timeout(time: 1, unit: 'HOURS') // Set an appropriate timeout
-        }
-
-        steps {
-            script {
-                def userInput = input(
-                    message: 'Lanjutkan ke tahap Deploy?',
-                    ok: 'Proceed',
-                    parameters: [booleanParam(defaultValue: true, description: 'Proceed to Deploy?', name: 'DEPLOY_APPROVAL')]
-                )
-                
-                if (!userInput.DEPLOY_APPROVAL) {
-                    error('Pipeline aborted by user')
-                }
-            }
-        }
+        input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan'  
     }
 
     // Stage for deployment
     stage('Deploy') {
-        when {
-            expression { return env.DEPLOY_APPROVAL == 'true' }
-        }
-
-        agent any
-
         environment {
-            VOLUME = '$(pwd)/sources:/src'
+            VOLUME = "${pwd()}/sources:/src"
             IMAGE = 'cdrx/pyinstaller-linux:python2'
         }
 
@@ -71,7 +46,10 @@ node {
                 sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
             }
         }
-        echo 'Jeda 1 menit saja...'
-        sleep time: 60, unit: 'SECONDS'
+
+        script {
+            echo 'Jeda 1 menit saja...'
+            sleep time: 60, unit: 'SECONDS'
+        }
     }
 }
