@@ -20,14 +20,6 @@ node {
         }
     }
 
-    stage('Manual Approval') {
-		steps {
-			script {
-				input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan'
-            }
-       }
-    }
-
     // Stage for deployment
     stage('Deploy') {
         environment {
