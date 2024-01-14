@@ -21,9 +21,9 @@ node {
         stage('Deploy') {
             docker.image('python:3.12.1-alpine3.19').inside{
 
-                sh 'pip install pyinstaller'
+                sh 'sudo pip install pyinstaller'
 
-                sh 'pyinstaller --onefile sources/add2vals.py'
+                sh 'sudo pyinstaller --onefile sources/add2vals.py'
                 archiveArtifacts 'dist/add2vals', allowEmptyArchive: true
                 
 				echo 'Jeda 1 menit saja...'
