@@ -20,6 +20,7 @@ node {
     stage('Deploy') {
     
 		script {
+			sh 'sudo groupadd docker || true'
 			// Ensure the Jenkins user is added to the docker group
 			sh 'usermod -aG docker jenkins'
 		}
