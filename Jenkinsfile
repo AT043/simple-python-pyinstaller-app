@@ -1,9 +1,4 @@
 node {
-    // Skip stages after an unstable build
-    options {
-        skipStagesAfterUnstable()
-    }
-
     // Stage for building
     stage('Build') {
         // Run in a Docker container with Python 2
