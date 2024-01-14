@@ -17,16 +17,19 @@ node {
         input message: 'Lanjutkan ke tahap Deploy?', ok: 'Proceed' 
     }
 
-    stage('Deploy') {    		
-		docker.image('python:3.12.1-alpine3.19').inside{
-			
-			sh 'pip install pyinstaller'
+	stage('Deploy') {
+		docker.image('python:3.12.1-alpine3.19').inside {
+			sh 'pip install --user pyinstaller'
+
+			// Add the user's bin directory to the PATH
+			sh 'export PATH=$PATH:/home/at79/.local/bin'
 
 			sh 'pyinstaller --onefile sources/add2vals.py'
 			archiveArtifacts 'dist/add2vals', allowEmptyArchive: true
-                
+
 			echo 'Jeda 1 menit saja...'
 			sleep time: 60, unit: 'SECONDS'
-        }
-   }
+		}
+	}
+
 }
