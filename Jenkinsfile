@@ -21,7 +21,11 @@ node {
     }
 
     stage('Manual Approval') {
-        input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan'  
+		steps {
+			script {
+				input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan'
+            }
+       }
     }
 
     // Stage for deployment
@@ -35,8 +39,6 @@ node {
             dir(path: env.BUILD_ID) {
                 unstash(name: 'compiled-results')
                 sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-                echo 'Jeda 1 menit saja...'
-                sleep time: 60, unit: 'SECONDS'
             }
         }
 
