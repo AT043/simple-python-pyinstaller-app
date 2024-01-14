@@ -18,7 +18,7 @@ node {
     }
 
 	stage('Deploy') {
-		docker.image('python:3.12.1-alpine3.19').inside {
+		docker.image('cdrx/pyinstaller-linux:python:3.12.1-alpine3.19').inside("--entrypoint=''") {
 			sh 'sudo -H pip install --user pyinstaller'
 
 			sh 'pyinstaller --onefile sources/add2vals.py'
