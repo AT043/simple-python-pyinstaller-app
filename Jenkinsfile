@@ -21,7 +21,7 @@ node {
     
 		script {
 			// Ensure the Jenkins user is added to the docker group
-			sh 'sudo usermod -aG docker jenkins'
+			sh 'usermod -aG docker jenkins'
 		}
 		
 		docker.image('python:3.12.1-alpine3.19').inside{
