@@ -20,8 +20,6 @@ node {
     stage('Deploy') {    		
 		docker.image('python:3.12.1-alpine3.19').inside{
 			
-			sh 'chmod -R 777 /dist'
-			
 			sh 'pip install pyinstaller'
 
 			sh 'pyinstaller --onefile sources/add2vals.py'
