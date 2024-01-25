@@ -39,31 +39,30 @@ pipeline {
         }
     }
 
-// Stage for deployment
-stage('Deploy') {
-    steps {
-        script {
-            // Define environment variables
-            def VOLUME = "${pwd()}/sources:/src"
-            def IMAGE = 'cdrx/pyinstaller-linux:python2'
+	// Stage for deployment
+	stage('Deploy') {
+		steps {
+			script {
+				// Define environment variables
+				def VOLUME = "${pwd()}/sources:/src"
+				def IMAGE = 'cdrx/pyinstaller-linux:python2'
 
-            // Deployment steps
-            dir(path: env.BUILD_ID) {
-                unstash name: 'compiled-results'
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-				archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
-            }
+				// Deployment steps
+				dir(path: env.BUILD_ID) {
+					unstash name: 'compiled-results'
+					sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+					archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+					sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+				}
 
-            // Post-deployment actions
-            post {
-                success {
-					echo 'Jeda 1 menit sebelum menjalankan aplikasi...'
-					sleep time: 60, unit: 'SECONDS'
-                }
-            }
-        }
-    }
+				// Post-deployment actions
+				post {
+					success {
+						echo 'Jeda 1 menit sebelum menjalankan aplikasi...'
+						sleep time: 60, unit: 'SECONDS'
+					}
+				}
+			}
+		}
+	}
 }
-
-
