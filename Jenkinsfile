@@ -37,7 +37,7 @@ node {
         // Use withDockerContainer to specify the pyinstaller container with a custom entrypoint
         withDockerContainer(
             image: 'cdrx/pyinstaller-linux:python2',
-            args: "--volume $(pwd)/sources:/src"
+            args: "--volume ${pwd()}/sources:/src"
         ) {
             dir(path: env.BUILD_ID) {
                 unstash(name: 'compiled-results')
@@ -49,3 +49,4 @@ node {
         sleep time: 60, unit: 'SECONDS'
     }
 }
+
