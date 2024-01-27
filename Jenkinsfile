@@ -34,10 +34,16 @@ pipeline {
             }
         }
 
+        stage('Manual Approval') {
+            steps {
+                input message: 'Lanjutkan ke tahap deploy?', ok: 'Proceed'
+            }
+        }
+
         stage('Deploy') { 
             agent any
             environment { 
-                VOLUME = '$(pwd)/sources:/src'
+                VOLUME = "${pwd()}/sources:/src"
                 IMAGE = 'cdrx/pyinstaller-linux:python2'
             }
             steps {
