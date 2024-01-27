@@ -35,12 +35,14 @@ node {
         checkout scm
 
         // Use withDockerContainer to specify the pyinstaller container with a custom entrypoint
-        withDockerContainer(image: 'cdrx/pyinstaller-linux:python2', args: '--entrypoint=""') {
-            sh '''
-                pip install pyinstaller
-                pyinstaller --onefile sources/add2vals.py
-            '''
-            archiveArtifacts artifacts: 'dist/add2vals', allowEmptyArchive: true
+        withDockerContainer(
+            image: 'cdrx/pyinstaller-linux:python2',
+            args: "--volume $(pwd)/sources:/src"
+        ) {
+            dir(path: env.BUILD_ID) {
+                unstash(name: 'compiled-results')
+                sh 'pyinstaller -F /src/add2vals.py'
+            }
         }
 
         echo 'Sleep for 1 min'
