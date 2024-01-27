@@ -2,18 +2,35 @@ node {
     try {
         // Build stage
         stage('Build') {
-            docker.image('python:2-alpine').inside {
-                sh 'python -m py_compile sources/add2vals.py sources/calc.py'
-                stash(name: 'compiled-results', includes: 'sources/*.py*')
+            def VOLUME = "${pwd()}/sources:/src"
+            def IMAGE = 'python:2-alpine'
+
+            // Use docker.image inside the script block
+            script {
+                docker.image(IMAGE).inside {
+                    sh 'python -m py_compile sources/add2vals.py sources/calc.py'
+                    stash(name: 'compiled-results', includes: 'sources/*.py*')
+                }
             }
         }
 
         // Test stage
         stage('Test') {
-            docker.image('qnib/pytest').inside {
-                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+            def VOLUME = "${pwd()}/sources:/src"
+            def IMAGE = 'qnib/pytest'
+
+            // Use docker.image inside the script block
+            script {
+                docker.image(IMAGE).inside {
+                    sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+                }
             }
-            junit 'test-reports/results.xml'
+
+            post {
+                always {
+                    junit 'test-reports/results.xml'
+                }
+            }
         }
 
         // Manual Approval stage
@@ -23,13 +40,17 @@ node {
 
         // Deploy stage
         stage('Deploy') {
-            agent any
             def VOLUME = "${pwd()}/sources:/src"
             def IMAGE = 'cdrx/pyinstaller-linux:python2'
 
-            dir(path: env.BUILD_ID) {
-                unstash(name: 'compiled-results')
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+            // Use docker.image inside the script block
+            script {
+                docker.image(IMAGE).inside {
+                    dir(path: env.BUILD_ID) {
+                        unstash(name: 'compiled-results')
+                        sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+                    }
+                }
             }
         }
 
@@ -38,6 +59,7 @@ node {
             echo 'Pausing for 60 seconds...'
             sleep time: 60, unit: 'SECONDS'
         }
+
     } catch (Exception e) {
         // Handle errors and mark the build as unstable
         currentBuild.result = 'UNSTABLE'
