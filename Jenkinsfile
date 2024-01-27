@@ -1,30 +1,49 @@
 node {
     stage('Build') {
-        docker.image('python:2-alpine').inside {
+        checkout scm
+        
+        // Use withDockerContainer to specify the Python container with a custom entrypoint
+        withDockerContainer(image: 'python:2-alpine', args: '--entrypoint=""') {
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
         }
     }
+}
 
+node {
     stage('Test') {
-        docker.image('qnib/pytest').inside {
-            sh 'py.test --verbose --junit-xml test-reports/results.xml sources/test_calc.py'
-        }
+        checkout scm
+        
+        // Use withDockerContainer to specify the pytest container with a custom entrypoint
+        withDockerContainer(image: 'qnib/pytest', args: '--entrypoint=""') {
 
-        post {
-            always {
-                junit 'test-reports/results.xml'
-            }
+            sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+            junit 'test-reports/results.xml'
         }
     }
+}
 
-    stage('Deliver') {
-		env.VOLUME = "${pwd()}/sources:/src"
-        env.IMAGE = 'cdrx/pyinstaller-linux:python2'
-        dir(env.BUILD_ID) {
-			unstash(name: 'compiled-results')
-            sh "docker run --rm -v ${env.VOLUME} ${env.IMAGE} 'pyinstaller -F add2vals.py'"
+node {
+	
+	stage('Manual Approval')  {         
+            checkout scm         
+
+            // Menunggu input persetujuan dari pengguna         
+            input message: 'Lanjutkan ke tahap Deploy?', ok: 'Lanjutkan'     
+	}
+}
+
+node {
+    stage('Deploy') {
+        checkout scm
+        // Use withDockerContainer to specify the pyinstaller container with a custom entrypoint
+        withDockerContainer(image: 'cdrx/pyinstaller-linux:python2', args: '--entrypoint=""') {
+            sh 'pyinstaller --onefile sources/add2vals.py'
+            archiveArtifacts artifacts: 'dist/add2vals', allowEmptyArchive: true
         }
-    archiveArtifacts "sources/dist/add2vals"
-    sh "docker run --rm -v ${env.VOLUME} ${env.IMAGE} 'rm -rf build dist'"
+
+        echo 'Sleep for 1 min'
+        sleep time: 60, unit: 'SECONDS'
+
     }
+
 }
