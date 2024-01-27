@@ -40,27 +40,28 @@ pipeline {
             }
         }
 
-        stage('Deploy') { 
-            agent any
-            environment { 
-                VOLUME = "${pwd()}/sources:/src"
-                IMAGE = 'cdrx/pyinstaller-linux:python2'
-            }
-            steps {
-                dir(path: env.BUILD_ID) { 
-                    unstash(name: 'compiled-results') 
-                    script {
-                        sh "docker run --rm -v ${VOLUME} ${IMAGE} pyinstaller -F /src/add2vals.py"
-                    }
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals" 
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} rm -rf build dist"
-                }
-            }
-        }
+		stage('Deploy') { 
+			agent any
+			environment { 
+				VOLUME = "${pwd()}/sources:/src"
+				IMAGE = 'cdrx/pyinstaller-linux:python2'
+			}
+			steps {
+				dir(path: env.BUILD_ID) { 
+					unstash(name: 'compiled-results') 
+					script {
+						def scriptName = "add2vals.py"
+						sh "docker run --rm -v ${VOLUME} ${IMAGE} pyinstaller -F /src/${scriptName}"
+					}
+				}
+			}
+			post {
+				success {
+					archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals" 
+					sh "docker run --rm -v ${VOLUME} ${IMAGE} rm -rf build dist"
+				}
+			}
+		}
 
         stage('Pause') {
             steps {
