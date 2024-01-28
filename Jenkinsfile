@@ -28,7 +28,7 @@ node {
     }
 
     stage('Pause') {
-        echo 'Pausing for 60 seconds...'
+        echo 'Jeda 1 menit...'
         sleep time: 60, unit: 'SECONDS'
     }
 }
