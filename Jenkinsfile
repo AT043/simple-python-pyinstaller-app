@@ -26,9 +26,12 @@ node {
                 }
             }
 
-            post {
-                always {
-                    junit 'test-reports/results.xml'
+            // Move the post block inside the script block
+            script {
+                post {
+                    always {
+                        junit 'test-reports/results.xml'
+                    }
                 }
             }
         }
