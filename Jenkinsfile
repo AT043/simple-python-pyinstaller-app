@@ -1,71 +1,64 @@
-node {
-    try {
-        // Build stage
+pipeline {
+    agent none
+
+    options {
+        skipStagesAfterUnstable()
+    }
+
+    stages {
         stage('Build') {
-            def VOLUME = "${pwd()}/sources:/src"
-            def IMAGE = 'python:2-alpine'
-
-            // Use docker.image inside the script block
-            script {
-                docker.image(IMAGE).inside {
-                    sh 'python -m py_compile sources/add2vals.py sources/calc.py'
-                    stash(name: 'compiled-results', includes: 'sources/*.py*')
+            agent {
+                docker {
+                    image 'python:2-alpine'
                 }
+            }
+            steps {
+                sh 'python -m py_compile sources/add2vals.py sources/calc.py'
+                stash(name: 'compiled-results', includes: 'sources/*.py*')
             }
         }
 
-        // Test stage
         stage('Test') {
-            def VOLUME = "${pwd()}/sources:/src"
-            def IMAGE = 'qnib/pytest'
-
-            // Use docker.image inside the script block
-            script {
-                docker.image(IMAGE).inside {
-                    sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+            agent {
+                docker {
+                    image 'qnib/pytest'
                 }
             }
-
-            // Move the post block inside the script block
-            script {
-                post {
-                    always {
-                        junit 'test-reports/results.xml'
-                    }
+            steps {
+                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
+            }
+            post {
+                always {
+                    junit 'test-reports/results.xml'
                 }
             }
         }
 
-        // Manual Approval stage
         stage('Manual Approval') {
-            input message: 'Lanjutkan ke tahap deploy?', ok: 'Proceed'
+            steps {
+                input message: 'Lanjutkan ke tahap deploy?', ok: 'Proceed'
+            }
         }
 
-        // Deploy stage
-        stage('Deploy') {
-            def VOLUME = "${pwd()}/sources:/src"
-            def IMAGE = 'cdrx/pyinstaller-linux:python2'
-
-            // Use docker.image inside the script block
-            script {
-                docker.image(IMAGE).inside {
-                    dir(path: env.BUILD_ID) {
-                        unstash(name: 'compiled-results')
-                        sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-                    }
+        stage('Deploy') { 
+            agent any
+            environment { 
+                VOLUME = '$(pwd)/sources:/src'
+                IMAGE = 'cdrx/pyinstaller-linux:python2'
+            }
+            steps {
+                dir(path: env.BUILD_ID) { 
+                    unstash(name: 'compiled-results') 
+                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'" 
                 }
             }
         }
 
-        // Pause stage
         stage('Pause') {
-            echo 'Pausing for 60 seconds...'
-            sleep time: 60, unit: 'SECONDS'
+            steps {
+                echo 'Pausing for 60 seconds...'
+                sleep time: 60, unit: 'SECONDS'
+            }
         }
-
-    } catch (Exception e) {
-        // Handle errors and mark the build as unstable
-        currentBuild.result = 'UNSTABLE'
-        throw e
     }
 }
