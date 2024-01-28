@@ -24,10 +24,7 @@ node {
                 unstash(name: 'compiled-results')
                 sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
             }
-        }
-    }
-
-    stage('Pause') {
+        } 
         echo 'Jeda 1 menit...'
         sleep time: 60, unit: 'SECONDS'
     }
