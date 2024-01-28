@@ -1,64 +1,34 @@
-pipeline {
-    agent none
-
-    options {
-        skipStagesAfterUnstable()
+node {
+    stage('Build') {
+        checkout scm
+        docker.image('python:2-alpine').inside {
+            sh 'python -m py_compile sources/add2vals.py sources/calc.py'
+            stash(name: 'compiled-results', includes: 'sources/*.py*')
+        }
     }
 
-    stages {
-        stage('Build') {
-            agent {
-                docker {
-                    image 'python:2-alpine'
-                }
-            }
-            steps {
-                sh 'python -m py_compile sources/add2vals.py sources/calc.py'
-                stash(name: 'compiled-results', includes: 'sources/*.py*')
-            }
+    stage('Test') {
+        docker.image('qnib/pytest').inside {
+            sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
         }
+        junit 'test-reports/results.xml'
+    }
 
-        stage('Test') {
-            agent {
-                docker {
-                    image 'qnib/pytest'
-                }
-            }
-            steps {
-                sh 'py.test --junit-xml test-reports/results.xml sources/test_calc.py'
-            }
-            post {
-                always {
-                    junit 'test-reports/results.xml'
-                }
-            }
-        }
+    stage('Manual Approval') {
+        input message: 'Lanjutkan ke tahap deploy?', ok: 'Proceed'
+    }
 
-        stage('Manual Approval') {
-            steps {
-                input message: 'Lanjutkan ke tahap deploy?', ok: 'Proceed'
+    stage('Deploy') {
+        withEnv(["VOLUME=$(pwd)/sources:/src", "IMAGE=cdrx/pyinstaller-linux:python2"]) {
+            dir(env.BUILD_ID) {
+                unstash(name: 'compiled-results')
+                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
             }
         }
+    }
 
-        stage('Deploy') { 
-            agent any
-            environment { 
-                VOLUME = '$(pwd)/sources:/src'
-                IMAGE = 'cdrx/pyinstaller-linux:python2'
-            }
-            steps {
-                dir(path: env.BUILD_ID) { 
-                    unstash(name: 'compiled-results') 
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'" 
-                }
-            }
-        }
-
-        stage('Pause') {
-            steps {
-                echo 'Pausing for 60 seconds...'
-                sleep time: 60, unit: 'SECONDS'
-            }
-        }
+    stage('Pause') {
+        echo 'Pausing for 60 seconds...'
+        sleep time: 60, unit: 'SECONDS'
     }
 }
